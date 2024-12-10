@@ -1,29 +1,26 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"gee"
 	"net/http"
 )
 
-// Engine is the uni handler for all requests
-type Engine struct{}
-
-func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	switch req.URL.Path {
-	case "/":
-		fmt.Fprintf(w, "URL.Path = %q\n", req.URL.Path)
-	case "/hello":
-		for k, v := range req.Header {
-			fmt.Fprintf(w, "Header[%q] = %q\n", k, v)
-		}
-	default:
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "404 NOT FOUND: %s\n", req.URL)
-	}
-}
-
 func main() {
-	engine := new(Engine)
-	log.Fatal(http.ListenAndServe(":9999", engine))
+	r := gee.New()
+	r.GET("/", func(c *gee.Context) {
+		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
+	})
+	r.GET("/hello", func(c *gee.Context) {
+		// expect /hello?name=geektutu
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
+	})
+
+	r.POST("/login", func(c *gee.Context) {
+		c.JSON(http.StatusOK, gee.H{
+			"username": c.PostForm("username"),
+			"password": c.PostForm("password"),
+		})
+	})
+
+	r.Run(":9999")
 }
